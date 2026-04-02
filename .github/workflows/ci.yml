@@ -1,4 +1,4 @@
-# Self-check for the scripts repository (hooks + installers present).
+# Hooks and installers: shell syntax + PowerShell hook integration test.
 name: CI
 
 on:
@@ -10,14 +10,34 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax (git hooks)
+        run: |
+          set -euo pipefail
+          sh -n git-hooks/protected-main.inc.sh
+          for f in git-hooks/pre-commit git-hooks/pre-merge-commit git-hooks/pre-push; do
+            sh -n "$f"
+          done
+
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Hook scripts exist
+        shell: bash
         run: |
           test -f git-hooks/pre-commit
           test -f git-hooks/pre-merge-commit
           test -f git-hooks/pre-push
           test -f git-hooks/protected-main.inc.sh
+
+      - name: Main-branch hook integration (PowerShell)
+        shell: pwsh
+        run: ./git-hooks/MainProtectionHooks.test.ps1

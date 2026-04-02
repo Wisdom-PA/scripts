@@ -34,6 +34,9 @@ try {
     Push-Location $tmp
     Invoke-Git init -b main | Out-Null
     git config core.hooksPath $hooksDir
+    # Ephemeral repos have no identity on CI runners (no global git config).
+    git config user.email "hooks-test@wisdom.local"
+    git config user.name "Hooks test"
 
     # First commit on main (empty repo) must succeed
     "init" | Out-File -FilePath "README.md" -Encoding utf8

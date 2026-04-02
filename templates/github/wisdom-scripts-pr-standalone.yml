@@ -1,4 +1,4 @@
-# Copy to consumer .github/workflows/wisdom-scripts-pr.yml if the composite action
+# Copy into .github/workflows/ci.yml (Wisdom scripts job) or use as a separate workflow if the composite action
 # Wisdom-PA/scripts/.github/actions/wisdom-scripts-sync@main is not available yet.
 # Replace WISDOM_SCRIPTS_REPO or set a repository variable of the same name.
 name: Wisdom scripts
