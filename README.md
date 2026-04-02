@@ -2,6 +2,8 @@
 
 Automation used across Wisdom repos: GitHub bootstrap, **shared Git hooks** (`git-hooks/`), and installers.
 
+Hook entrypoints (`pre-commit`, `pre-merge-commit`, `pre-push`) are stored in Git with the **executable bit** set so they run on Linux and macOS. If you ever copy them by hand, run `chmod +x git-hooks/pre-commit git-hooks/pre-merge-commit git-hooks/pre-push`.
+
 ## Consuming this repo from app, cube, contracts, etc.
 
 Use a **git submodule** so each consumer pins a commit of scripts and can update deliberately.
