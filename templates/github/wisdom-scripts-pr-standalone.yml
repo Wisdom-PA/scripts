@@ -1,0 +1,41 @@
+# Copy to consumer .github/workflows/wisdom-scripts-pr.yml if the composite action
+# Wisdom-PA/scripts/.github/actions/wisdom-scripts-sync@main is not available yet.
+# Replace WISDOM_SCRIPTS_REPO or set a repository variable of the same name.
+name: Wisdom scripts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  WISDOM_SCRIPTS_REPO: https://github.com/Wisdom-PA/scripts.git
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Sync wisdom-scripts to latest main
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO="${WISDOM_SCRIPTS_REPO}"
+          if git config -f .gitmodules --get submodule.wisdom-scripts.path >/dev/null 2>&1; then
+            git submodule sync -- wisdom-scripts 2>/dev/null || true
+            git submodule update --init --depth 1 wisdom-scripts
+            git -C wisdom-scripts remote set-url origin "$REPO"
+            git -C wisdom-scripts fetch --depth 1 origin main
+            git -C wisdom-scripts checkout -q FETCH_HEAD
+          else
+            rm -rf wisdom-scripts
+            git clone --depth 1 --branch main "$REPO" wisdom-scripts
+          fi
+          test -f wisdom-scripts/git-hooks/pre-commit
+          echo "wisdom-scripts at $(git -C wisdom-scripts rev-parse --short HEAD)"

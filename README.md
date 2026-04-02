@@ -1,0 +1,84 @@
+# Wisdom scripts (shared tooling)
+
+Automation used across Wisdom repos: GitHub bootstrap, **shared Git hooks** (`git-hooks/`), and installers.
+
+## Consuming this repo from app, cube, contracts, etc.
+
+Use a **git submodule** so each consumer pins a commit of scripts and can update deliberately.
+
+1. From the **consumer** repository root (e.g. `cube/`):
+
+   ```bash
+   git submodule add https://github.com/Wisdom-PA/scripts.git wisdom-scripts
+   git submodule update --init
+   ```
+
+2. Point Git at the hooks (pick one):
+
+   - **PowerShell** (from consumer root): run the installer from the submodule:
+
+     ```powershell
+     .\wisdom-scripts\install-main-branch-hooks.ps1 -Mode Submodule -OnlyCurrentRepo
+     ```
+
+   - **Manual:** `git config core.hooksPath wisdom-scripts/git-hooks`
+
+3. Commit `.gitmodules` and the `wisdom-scripts` submodule pointer on a feature branch; merge via PR.
+
+After `git clone` of a consumer, run `git submodule update --init --recursive` (or clone with `--recurse-submodules`), then set `core.hooksPath` again if the clone did not preserve local config (hooksPath is local git config, not committed—document “run installer after clone” in the consumer README or a `CONTRIBUTING.md`).
+
+## Local Wisdom workspace (all repos as siblings)
+
+If `app/`, `cube/`, `scripts/`, … sit under one parent folder with **no** submodule, use **Workspace** mode (default):
+
+```powershell
+.\scripts\install-main-branch-hooks.ps1
+```
+
+```bash
+bash scripts/install-main-branch-hooks.sh
+```
+
+## Submodule mode from the Wisdom parent folder
+
+If every sibling repo already contains `wisdom-scripts/`:
+
+```powershell
+.\scripts\install-main-branch-hooks.ps1 -Mode Submodule
+```
+
+```bash
+WISDOM_HOOKS_MODE=submodule bash scripts/install-main-branch-hooks.sh
+```
+
+## CI (GitHub Actions): latest scripts on every PR
+
+Consumer repos (app, cube, contracts, backend, listener) include `.github/workflows/wisdom-scripts-pr.yml`, which runs on each **pull request** and **push to `main`**. It checks out the repo (with submodules if present), then uses the composite action **`Wisdom-PA/scripts/.github/actions/wisdom-scripts-sync@main`** so the job always sees **the latest `main` of the scripts repo**—the committed submodule pointer is not used for that step.
+
+**Deploy order**
+
+1. Create and push the **`scripts`** repository to GitHub first (so `main` contains `git-hooks/` and `.github/actions/wisdom-scripts-sync/action.yml`).
+2. Add the **`wisdom-scripts`** submodule to each consumer (`bootstrap-wisdom-submodules.ps1` / `.sh`), commit on a feature branch, merge via PR.
+3. Enable workflows on each consumer repo. If the composite action is not reachable yet, copy `templates/github/wisdom-scripts-pr-standalone.yml` into `.github/workflows/` instead (same behaviour, inlined).
+
+To point at a fork, change the URL in the workflow or set a repository variable `WISDOM_SCRIPTS_REPO` and adjust the standalone template / action `inputs.scripts-repo` (composite supports `with: scripts-repo: ...`).
+
+## Bootstrap submodules (all consumers from Wisdom root)
+
+After **`scripts`** exists on GitHub:
+
+```powershell
+.\scripts\bootstrap-wisdom-submodules.ps1
+# or another remote:
+.\scripts\bootstrap-wisdom-submodules.ps1 -ScriptsRepoUrl https://github.com/your-org/scripts.git
+```
+
+```bash
+bash scripts/bootstrap-wisdom-submodules.sh https://github.com/Wisdom-PA/scripts.git
+```
+
+Then commit `.gitmodules` and the submodule reference **on a feature branch** in each consumer (not on `main`).
+
+## npm / Maven
+
+Hooks are shell scripts; submodule (or a shallow copy in CI) is the portable approach. Optional: publish a small npm package later that only wraps `git config` and documents the submodule path—only useful where Node is already required.

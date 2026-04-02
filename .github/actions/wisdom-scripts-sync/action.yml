@@ -1,0 +1,31 @@
+name: Sync wisdom-scripts for CI
+description: >-
+  Ensures wisdom-scripts is present and checks out the latest commit on main for this job.
+  The submodule pointer in the parent repository is not used for CI freshness.
+
+inputs:
+  scripts-repo:
+    description: Git URL for the Wisdom scripts repository
+    required: false
+    default: https://github.com/Wisdom-PA/scripts.git
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        REPO: ${{ inputs.scripts-repo }}
+      run: |
+        set -euo pipefail
+        if git config -f .gitmodules --get submodule.wisdom-scripts.path >/dev/null 2>&1; then
+          git submodule sync -- wisdom-scripts 2>/dev/null || true
+          git submodule update --init --depth 1 wisdom-scripts
+          git -C wisdom-scripts remote set-url origin "$REPO"
+          git -C wisdom-scripts fetch --depth 1 origin main
+          git -C wisdom-scripts checkout -q FETCH_HEAD
+        else
+          rm -rf wisdom-scripts
+          git clone --depth 1 --branch main "$REPO" wisdom-scripts
+        fi
+        test -f wisdom-scripts/git-hooks/pre-commit
+        echo "wisdom-scripts at $(git -C wisdom-scripts rev-parse --short HEAD)"

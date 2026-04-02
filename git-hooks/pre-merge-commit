@@ -1,0 +1,3 @@
+#!/bin/sh
+. "$(dirname "$0")/protected-main.inc.sh"
+wisdom_abort_if_protected_commit

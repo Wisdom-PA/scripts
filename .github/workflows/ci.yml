@@ -1,0 +1,23 @@
+# Self-check for the scripts repository (hooks + installers present).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hook scripts exist
+        run: |
+          test -f git-hooks/pre-commit
+          test -f git-hooks/pre-merge-commit
+          test -f git-hooks/pre-push
+          test -f git-hooks/protected-main.inc.sh

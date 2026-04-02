@@ -1,0 +1,32 @@
+#!/bin/sh
+# Block pushes that update remote main/master (including feature:main). Allow
+# first-time creation of remote main (remote sha all zeros). Block deleting main.
+# One-time bypass: GIT_MAIN_PROTECTION=0  |  Emergency: git push --no-verify
+
+[ "${GIT_MAIN_PROTECTION:-1}" = "0" ] && exit 0
+
+zero=0000000000000000000000000000000000000000
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$remote_ref" ] && continue
+  case "$remote_ref" in
+  refs/heads/main | refs/heads/master) ;;
+  *) continue ;;
+  esac
+
+  if [ "$local_sha" = "$zero" ]; then
+    printf '%s\n' "Wisdom: deleting protected branch '${remote_ref}' is blocked." >&2
+    exit 1
+  fi
+
+  if [ "$remote_sha" = "$zero" ]; then
+    continue
+  fi
+
+  if [ "$local_sha" != "$remote_sha" ]; then
+    printf '%s\n' "Wisdom: pushing directly to '${remote_ref}' is blocked. Push a feature branch and open a PR." >&2
+    exit 1
+  fi
+done
+
+exit 0
