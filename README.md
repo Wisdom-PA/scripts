@@ -63,6 +63,13 @@ Consumer repos (app, cube, contracts, backend, listener) include `.github/workfl
 
 To point at a fork, change the URL in the workflow or set a repository variable `WISDOM_SCRIPTS_REPO` and adjust the standalone template / action `inputs.scripts-repo` (composite supports `with: scripts-repo: ...`).
 
+## Push checklist (local workspace → GitHub)
+
+1. **`gh auth login`** (or set `GH_TOKEN`) so `gh` can create/push repos.
+2. **Create and push `scripts` first** on branch `chore/initial-scripts-repo` (or merge it to `main` on GitHub so `@main` resolves for composite actions).
+3. **Push each consumer’s** `chore/wisdom-scripts-integration` branch and open PRs to `main` (do not push these commits directly to `main`).
+4. If you added submodules with a **local** URL (`../scripts` / `file:`), run **`set-wisdom-submodule-remote.ps1`** before pushing consumers so `.gitmodules` uses `https://github.com/Wisdom-PA/scripts.git` (or pass your fork URL).
+
 ## Bootstrap submodules (all consumers from Wisdom root)
 
 After **`scripts`** exists on GitHub:

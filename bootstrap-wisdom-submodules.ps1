@@ -25,7 +25,8 @@ foreach ($name in $consumers) {
             Write-Host ($name + ': wisdom-scripts already exists — skip')
             continue
         }
-        git submodule add -b main $ScriptsRepoUrl wisdom-scripts
+        # Windows Git often blocks file:// submodules unless allowed (local ../scripts).
+        git -c protocol.file.allow=always submodule add -b main $ScriptsRepoUrl wisdom-scripts
         git submodule update --init --depth 1 wisdom-scripts
         Write-Host ($name + ': submodule wisdom-scripts added')
     }
